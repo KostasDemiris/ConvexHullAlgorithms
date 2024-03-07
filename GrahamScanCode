@@ -1,0 +1,48 @@
+# By Kostas Demiris
+import math
+
+
+def get_smallest_point(point_set):
+    # Returns the right-most bottom point
+    minimum = [-float('inf'), float('inf')]
+    for point in point_set:
+        if point[1] < minimum[1] or (point[1] == minimum[1] and point[0] > minimum[0]):
+            minimum = point
+    return minimum
+
+def is_concave(a, b, c):
+    return ((b[0] - a[0]) * (c[1] - a[1])) - ((b[1] - a[1]) * (c[0] - a[0])) > 0 
+
+def cross_product(a, b, c):
+    return ((b[0] - a[0]) * (c[1] - a[1])) - ((b[1] - a[1]) * (c[0] - a[0]))
+
+def angle_to_positive(source, destination):
+    # Finds the polar angle of the line between source to destination
+    delta_x = destination[0] - source[0]
+    delta_y = destination[1] - source[1]
+    angle = math.atan2(delta_y, delta_x)
+    if angle < 0:
+        angle = 2 * math.pi + angle
+    if delta_x == 0 and delta_y < 0:
+        return (1.5) * math.pi
+    if delta_y == 0 and delta_x < 0:
+        return 2 * math.pi
+    
+    return angle
+
+def graham_scan(point_set):
+    initial_point = get_smallest_point(point_set)
+    out_stack = []
+    sorted_points = sorted(point_set, key=lambda point, initial_point = initial_point: angle_to_positive(initial_point, point))
+    for point in sorted_points:
+        while len(out_stack) >= 3 and not is_concave(out_stack[-2], out_stack[-1], point):
+            # This way it also removes colinear points
+            out_stack.pop(-1)
+        out_stack.append(point)
+        
+    if len(out_stack) >= 3 and not is_concave(out_stack[0], out_stack[1], out_stack[2]):
+        out_stack.pop(1)
+    if len(out_stack) >= 3 and not is_concave(out_stack[-2], out_stack[-1], out_stack[0]):
+        out_stack.pop(-1)
+        
+    return out_stack
